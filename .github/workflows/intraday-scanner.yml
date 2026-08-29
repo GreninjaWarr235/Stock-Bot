@@ -1,0 +1,39 @@
+name: Intraday Stock Scanner
+
+on:
+  schedule:
+  # Start at 3:45 UTC (9:15 AM IST)
+    - cron: "45 3 * * 1-5"
+  # Run every 15 minutes from 4:00 UTC (9:30 AM IST) to 9:00 UTC (3:30 PM IST)
+    - cron: "0,15,30,45 4-9 * * 1-5"
+
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run intraday scanner
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DATA_SOURCE: "yfinance"
+          PYTHONUNBUFFERED: "1"
+          PYTHONPATH: "./bot"
+
+        run: |
+          python -m alerts.intraday_scanner

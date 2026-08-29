@@ -19,6 +19,8 @@ import time
 import argparse
 from pathlib import Path
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+from config.settings import TZ_IST
 
 # Ensure 'bot' directory is in sys.path
 BOT_DIR = Path(__file__).resolve().parent
@@ -40,7 +42,7 @@ def run_intraday_daemon(interval_minutes: int = 15, force: bool = False):
     print("Press Ctrl+C to stop.\n")
 
     while True:
-        now = datetime.now()
+        now = datetime.now(ZoneInfo(TZ_IST))
         in_market = is_market_hours()
 
         if in_market or force:

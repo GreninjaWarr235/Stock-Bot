@@ -1,7 +1,7 @@
 """
 analytics package
 =================
-Analytics, reporting, and signal verification tools for India Swing Trading Alert System.
+Analytics, reporting, and signal verification tools for Stock Bot.
 """
 
 def view_recent_alerts(*args, **kwargs):

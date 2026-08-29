@@ -15,6 +15,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from datetime import datetime, timedelta
+import yfinance as yf
 
 log = logging.getLogger(__name__)
 
@@ -33,15 +34,43 @@ def load_data(symbols, start, end, source="synthetic", kite=None, interval="day"
     elif source == "yfinance":
         for sym in symbols:
             try:
-                import yfinance as yf
                 ticker = f"{sym}.NS"
-                df = yf.download(ticker, start=start, end=end, auto_adjust=True, progress=False)
-                if not df.empty:
-                    df = _normalise(df, sym)
-                    if df is not None:
-                        result[sym] = df
+
+                if interval in ("day", "1d"):
+                    df = yf.download(
+                        ticker,
+                        start=start,
+                        end=end,
+                        interval="1d",
+                        auto_adjust=True,
+                        progress=False,
+                    )
+                else:
+                    df = yf.download(
+                        ticker,
+                        period="5d",
+                        interval=interval,
+                        auto_adjust=True,
+                        progress=False,
+                    )
+
+                if df.empty:
+                    log.warning(
+                        f"No data returned for {sym} "
+                        f"(interval={interval})"
+                    )
+                    continue
+
+                df = _normalise(df, sym)
+
+                if df is not None:
+                    result[sym] = df
+
             except Exception as e:
-                log.warning(f"Failed to load {sym} from yfinance: {e}")
+                log.warning(
+                    f"Failed to load {sym} from yfinance "
+                    f"(interval={interval}): {e}"
+                )
     elif source == "csv":
         for sym in symbols:
             try:

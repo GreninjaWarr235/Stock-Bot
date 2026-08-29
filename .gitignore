@@ -1,4 +1,4 @@
-# Environment variables & secrets (CRITICAL)
+# Environment variables & secrets
 .env
 *.env
 !.env.template
@@ -23,7 +23,7 @@ ENV/
 bot/logs/
 *.log
 bot/alerts/alert_history.json
-bot/reports/scan_*.json
+bot/reports/*.json
 
 # Distribution / Build outputs
 dist/

@@ -1,7 +1,7 @@
 """
 config/settings.py
 ==================
-Central configuration module for India Swing Trading Alert System.
+Central configuration module for Stock Bot.
 
 Loads environment variables from .env file and provides default parameters
 for indicator calculations, pattern detection, risk management, and notifications.
@@ -45,7 +45,6 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "").strip()
 
 # System Execution Parameters
-EXECUTION_MODE = os.getenv("EXECUTION_MODE", "dry_run").strip()
 DATA_SOURCE = os.getenv("DATA_SOURCE", "synthetic").strip()
 
 # Alert & Signal Thresholds

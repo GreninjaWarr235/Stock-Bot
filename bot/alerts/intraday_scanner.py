@@ -113,7 +113,8 @@ def scan_portfolio(symbols: list[str] | None = None,
         symbols=symbols,
         start=start_date,
         end=end_date,
-        source=DATA_SOURCE
+        source=DATA_SOURCE,
+        interval="15m",
     )
 
     log.info(f"Loaded market data for {len(data_map)} portfolio symbols")
@@ -151,7 +152,7 @@ def scan_portfolio(symbols: list[str] | None = None,
                 alert.description = f"[INTRADAY PORTFOLIO] {alert.description}"
                 alert.is_intraday = True
                 alerts.append(alert)
-                log.info(f"⚡ Live Alert {symbol}: {alert.signal_type} (score: {alert.confidence})")
+                log.info(f"⚡ Intraday Alert {symbol}: {alert.signal_type} (score: {alert.confidence})")
 
                 if not test_mode:
                     # Format message specifically for intraday alerts

@@ -13,8 +13,9 @@ import time
 import argparse
 from pathlib import Path
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+from config.settings import TZ_IST
 
-# Ensure 'bot' directory is in sys.path
 BOT_DIR = Path(__file__).resolve().parent
 if str(BOT_DIR) not in sys.path:
     sys.path.insert(0, str(BOT_DIR))
@@ -39,7 +40,7 @@ def run_daily_scheduler(target_time_str: str = "16:05"):
     print(f"Press Ctrl+C to stop.\n")
 
     while True:
-        now = datetime.now()
+        now = datetime.now(ZoneInfo(TZ_IST))
         target_today = now.replace(hour=target_hour, minute=target_minute, second=0, microsecond=0)
 
         # If today's run time has passed, schedule for tomorrow
@@ -59,7 +60,7 @@ def run_daily_scheduler(target_time_str: str = "16:05"):
             sys.exit(0)
 
         # Run scanner (Skip weekends if desired, e.g. Saturday=5, Sunday=6)
-        run_day = datetime.now().weekday()
+        run_day = datetime.now(ZoneInfo(TZ_IST)).weekday()
         if run_day in (5, 6):
             log.info("Weekend detected (Saturday/Sunday). Skipping market scan.")
         else:

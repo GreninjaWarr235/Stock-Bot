@@ -22,6 +22,8 @@ import logging
 import time
 from typing import Optional
 from datetime import datetime
+from zoneinfo import ZoneInfo
+from config.settings import TZ_IST
 
 import requests
 
@@ -165,7 +167,7 @@ class TelegramNotifier:
         
         summary += f"""
 
-⏰ Time: {datetime.now().strftime('%Y-%m-%d %H:%M IST')}
+⏰ Time: {datetime.now(ZoneInfo(TZ_IST)).strftime('%Y-%m-%d %H:%M IST')}
 ✅ Check individual alerts above for details."""
         
         return self._send_message(summary)

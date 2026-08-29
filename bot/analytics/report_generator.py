@@ -19,6 +19,8 @@ if str(BOT_DIR) not in sys.path:
     sys.path.insert(0, str(BOT_DIR))
 
 from datetime import datetime
+from zoneinfo import ZoneInfo
+from config.settings import TZ_IST
 
 from config.settings import REPORTS_DIR
 from config.logger import get_logger
@@ -35,7 +37,7 @@ def generate_markdown_summary(output_file: Path | None = None) -> Path:
 
     md_lines = [
         "# 📊 Swing Trading Alert System - Digest Report",
-        f"**Generated At:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S IST')}  ",
+        f"**Generated At:** {datetime.now(ZoneInfo(TZ_IST)).strftime('%Y-%m-%d %H:%M:%S IST')}  ",
         f"**Total Scan Runs Found:** {len(report_files)}",
         "",
         "---",

@@ -146,7 +146,7 @@ def view_history(intraday: bool = False):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="View India Swing Trading Alerts")
+    parser = argparse.ArgumentParser(description="View Stock Bot Alerts")
     parser.add_argument("--date", type=str, help="Report date YYYYMMDD (default: latest)")
     parser.add_argument("--min-score", type=int, default=0, help="Filter alerts by minimum confidence score")
     parser.add_argument("--symbol", type=str, help="Filter alerts by symbol (e.g. RELIANCE)")

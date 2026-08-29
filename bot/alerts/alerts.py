@@ -23,6 +23,8 @@ import logging
 from datetime import datetime, timedelta
 from dataclasses import dataclass, asdict
 from typing import Optional
+from zoneinfo import ZoneInfo
+from config.settings import TZ_IST
 
 import pandas as pd
 
@@ -239,7 +241,7 @@ class AlertGenerator:
         
         # Build alert
         alert = Alert(
-            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M IST"),
+            timestamp=datetime.now(ZoneInfo(TZ_IST)).strftime("%Y-%m-%d %H:%M IST"),
             symbol=symbol,
             signal_type=pattern_name,
             confidence=min(100, score + self._confluence_bonus(patterns)),
@@ -325,14 +327,14 @@ class AlertGenerator:
         if last_time is None:
             return True
         
-        hours_ago = (datetime.now() - last_time).total_seconds() / 3600
+        hours_ago = (datetime.now(ZoneInfo(TZ_IST)) - last_time).total_seconds() / 3600
         return hours_ago >= self.alert_dedup_hours
     
     def _record_alert(self, symbol: str, signal_type: str) -> None:
         """Record that this alert was sent."""
         if symbol not in self.alert_history:
             self.alert_history[symbol] = {}
-        self.alert_history[symbol][signal_type] = datetime.now()
+        self.alert_history[symbol][signal_type] = datetime.now(ZoneInfo(TZ_IST))
     
     def load_alert_history(self, filepath: str) -> None:
         """Load alert history from JSON file."""

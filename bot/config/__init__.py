@@ -1,7 +1,7 @@
 """
 config package
 ==============
-Configuration settings and logging utilities for India Swing Trading Alert System.
+Configuration settings and logging utilities for Stock Bot.
 """
 
 from config.settings import (
@@ -20,7 +20,6 @@ from config.settings import (
     DEFAULT_STOP_LOSS_PCT,
     DEFAULT_TRAILING_STOP_PCT,
     TZ_IST,
-    EXECUTION_MODE,
     DATA_SOURCE,
 )
 from config.logger import get_logger, log_event
@@ -41,7 +40,6 @@ __all__ = [
     "DEFAULT_STOP_LOSS_PCT",
     "DEFAULT_TRAILING_STOP_PCT",
     "TZ_IST",
-    "EXECUTION_MODE",
     "DATA_SOURCE",
     "get_logger",
     "log_event",

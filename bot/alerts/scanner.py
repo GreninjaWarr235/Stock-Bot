@@ -104,7 +104,8 @@ def scan_universe(symbols: list[str] | None = None,
         symbols=symbols,
         start=start_date,
         end=end_date,
-        source=DATA_SOURCE
+        source=DATA_SOURCE,
+        interval="day",
     )
     
     log.info(f"Data loaded for {len(data_map)} symbols")
