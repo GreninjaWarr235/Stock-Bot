@@ -1,0 +1,31 @@
+# Environment variables & secrets (CRITICAL)
+.env
+*.env
+!.env.template
+
+# Python runtime & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+ENV/
+.venv
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Application runtime output & logs
+bot/logs/
+*.log
+bot/alerts/alert_history.json
+bot/reports/scan_*.json
+
+# Distribution / Build outputs
+dist/
+build/
+*.egg-info/

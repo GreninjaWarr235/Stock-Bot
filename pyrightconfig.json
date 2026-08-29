@@ -1,0 +1,18 @@
+{
+  "include": [
+    "bot"
+  ],
+  "extraPaths": [
+    "bot",
+    "bot/alerts"
+  ],
+  "executionEnvironments": [
+    {
+      "root": "bot",
+      "extraPaths": [
+        "bot",
+        "bot/alerts"
+      ]
+    }
+  ]
+}
