@@ -3,24 +3,24 @@
 
 services:
   # Option A: Continuous Background Worker Daemon
-  - type: worker
-    name: india-swing-bot-daemon
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python bot/scheduler.py
-    envVars:
-      - key: TELEGRAM_BOT_TOKEN
-        sync: false
-      - key: TELEGRAM_CHAT_ID
-        sync: false
-      - key: ALERT_MIN_SCORE
-        value: "70"
-      - key: EXECUTION_MODE
-        value: "live"
-      - key: DATA_SOURCE
-        value: "yahoo"
-      - key: PYTHONUNBUFFERED
-        value: "1"
+  # - type: worker
+  #   name: india-swing-bot-daemon
+  #   env: python
+  #   buildCommand: pip install -r requirements.txt
+  #   startCommand: python bot/scheduler.py
+  #   envVars:
+  #     - key: TELEGRAM_BOT_TOKEN
+  #       sync: false
+  #     - key: TELEGRAM_CHAT_ID
+  #       sync: false
+  #     - key: ALERT_MIN_SCORE
+  #       value: "70"
+  #     - key: EXECUTION_MODE
+  #       value: "live"
+  #     - key: DATA_SOURCE
+  #       value: "yahoo"
+  #     - key: PYTHONUNBUFFERED
+  #       value: "1"
 
   # Option B1: Render Cron Job - Daily Close Scanner (Runs Mon-Fri at 4:05 PM IST / 10:35 UTC)
   - type: cron
