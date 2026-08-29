@@ -1,4 +1,4 @@
-name: India Swing Trading Bot
+name: Stock Bot
 
 on:
   schedule:
