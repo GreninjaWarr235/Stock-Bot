@@ -85,4 +85,4 @@ jobs:
           PYTHONPATH: "./bot"
 
         run: |
-          python -m alerts.intraday_scanner
+          python -m alerts.intraday_scanner --force
