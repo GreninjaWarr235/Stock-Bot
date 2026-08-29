@@ -21,6 +21,7 @@ import logging
 from pathlib import Path
 from datetime import datetime, timedelta
 import json
+from zoneinfo import ZoneInfo
 
 # Ensure 'bot' directory is in sys.path
 BOT_DIR = Path(__file__).resolve().parent.parent
@@ -35,6 +36,7 @@ from config.settings import (
     MIN_AVG_DAILY_VOLUME,
     MIN_PRICE,
     TZ_IST,
+    DATA_SOURCE
 )
 from config.logger import get_logger, log_event
 from data.loader import load_data, load_portfolio_universe, validate_ohlcv
@@ -53,7 +55,7 @@ except (ImportError, ModuleNotFoundError):
 log = get_logger("intraday_scanner")
 
 INTRADAY_ALERT_HISTORY_FILE = REPORTS_DIR / "intraday_alert_history.json"
-INTRADAY_REPORT_FILE = REPORTS_DIR / f"intraday_alerts_{datetime.now().strftime('%Y%m%d')}.json"
+INTRADAY_REPORT_FILE = REPORTS_DIR / f"intraday_alerts_{datetime.now(ZoneInfo(TZ_IST)).strftime('%Y%m%d')}.json"
 
 
 def is_market_hours() -> bool:
@@ -61,7 +63,7 @@ def is_market_hours() -> bool:
     Check if current local time is within Indian Stock Market hours:
     Monday to Friday, 09:15 AM to 03:30 PM (15:30 IST).
     """
-    now = datetime.now()
+    now = datetime.now(ZoneInfo(TZ_IST))
     # Check weekday (0 = Monday, 4 = Friday, 5 = Sat, 6 = Sun)
     if now.weekday() in (5, 6):
         return False
@@ -79,7 +81,7 @@ def scan_portfolio(symbols: list[str] | None = None,
     """
     Scan portfolio stocks for intraday trading signals during market hours.
     """
-    now = datetime.now()
+    now = datetime.now(ZoneInfo(TZ_IST))
 
     # Verify Market Hours unless force_scan or test_mode is True
     if not is_market_hours() and not test_mode and not force_scan and symbols is None:
@@ -93,7 +95,7 @@ def scan_portfolio(symbols: list[str] | None = None,
             "errors": [],
         }
 
-    start_time = datetime.now()
+    start_time = datetime.now(ZoneInfo(TZ_IST))
 
     if symbols is None:
         # Load portfolio universe from portfolio.csv
@@ -111,7 +113,7 @@ def scan_portfolio(symbols: list[str] | None = None,
         symbols=symbols,
         start=start_date,
         end=end_date,
-        source="synthetic",  # Uses synthetic/historical feed
+        source=DATA_SOURCE
     )
 
     log.info(f"Loaded market data for {len(data_map)} portfolio symbols")
@@ -164,7 +166,7 @@ def scan_portfolio(symbols: list[str] | None = None,
     # Save alert history
     alert_gen.save_alert_history(str(INTRADAY_ALERT_HISTORY_FILE))
 
-    duration = (datetime.now() - start_time).total_seconds()
+    duration = (datetime.now(ZoneInfo(TZ_IST)) - start_time).total_seconds()
 
     result = {
         "scan_time": start_time.isoformat(),

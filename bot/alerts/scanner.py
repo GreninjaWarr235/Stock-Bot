@@ -31,6 +31,7 @@ if str(BOT_DIR) not in sys.path:
     sys.path.insert(0, str(BOT_DIR))
 
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 import json
 
 import pandas as pd
@@ -41,6 +42,9 @@ from config.settings import (
     MIN_AVG_DAILY_VOLUME,
     MIN_PRICE,
     TZ_IST,
+    DATA_SOURCE,
+    ALERT_MIN_SCORE,
+    ALERT_DEDUP_HOURS
 )
 from config.logger import get_logger, log_event
 
@@ -60,7 +64,7 @@ except (ImportError, ModuleNotFoundError):
 log = get_logger(__name__)
 
 ALERT_HISTORY_FILE = REPORTS_DIR / "alert_history.json"
-REPORT_FILE = REPORTS_DIR / f"alerts_{datetime.now().strftime('%Y%m%d')}.json"
+REPORT_FILE = REPORTS_DIR / f"alerts_{datetime.now(ZoneInfo(TZ_IST)).strftime('%Y%m%d')}.json"
 
 
 def scan_universe(symbols: list[str] | None = None,
@@ -70,10 +74,10 @@ def scan_universe(symbols: list[str] | None = None,
     Scan a list of symbols for trading alerts.
     """
     # Check for weekend (Saturday = 5, Sunday = 6)
-    if datetime.now().weekday() in (5, 6) and not test_mode and not force_scan and symbols is None:
+    if datetime.now(ZoneInfo(TZ_IST)).weekday() in (5, 6) and not test_mode and not force_scan and symbols is None:
         log.info("Weekend detected (Saturday/Sunday). Stock market is closed. Skipping scan.")
         return {
-            "scan_time": datetime.now().isoformat(),
+            "scan_time": datetime.now(ZoneInfo(TZ_IST)).isoformat(),
             "scan_duration_seconds": 0,
             "symbols_scanned": 0,
             "alerts_generated": 0,
@@ -82,7 +86,7 @@ def scan_universe(symbols: list[str] | None = None,
             "skipped": "Weekend",
         }
 
-    start_time = datetime.now()
+    start_time = datetime.now(ZoneInfo(TZ_IST))
     
     if symbols is None:
         # Load universe
@@ -93,24 +97,24 @@ def scan_universe(symbols: list[str] | None = None,
         log.info(f"Scanning {len(symbols)} specified symbols")
     
     # Load 1 year of data
-    end_date = datetime.now().strftime("%Y-%m-%d")
-    start_date = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
+    end_date = datetime.now(ZoneInfo(TZ_IST)).strftime("%Y-%m-%d")
+    start_date = (datetime.now(ZoneInfo(TZ_IST)) - timedelta(days=365)).strftime("%Y-%m-%d")
     
     data_map = load_data(
         symbols=symbols,
         start=start_date,
         end=end_date,
-        source="synthetic",  # Use synthetic in demo; replace with yfinance/kite for production
+        source=DATA_SOURCE
     )
     
     log.info(f"Data loaded for {len(data_map)} symbols")
     
     # Initialize alert generator
     alert_gen = AlertGenerator(
-        min_score=70,
+        min_score=ALERT_MIN_SCORE,
         min_price=MIN_PRICE,
         min_avg_volume=MIN_AVG_DAILY_VOLUME,
-        alert_dedup_hours=4,
+        alert_dedup_hours=ALERT_DEDUP_HOURS,
     )
     alert_gen.load_alert_history(str(ALERT_HISTORY_FILE))
     
@@ -153,7 +157,7 @@ def scan_universe(symbols: list[str] | None = None,
     alert_gen.save_alert_history(str(ALERT_HISTORY_FILE))
     
     # Generate report
-    duration = (datetime.now() - start_time).total_seconds()
+    duration = (datetime.now(ZoneInfo(TZ_IST)) - start_time).total_seconds()
     
     result = {
         "scan_time": start_time.isoformat(),
