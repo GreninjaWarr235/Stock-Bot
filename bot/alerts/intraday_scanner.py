@@ -54,7 +54,6 @@ except (ImportError, ModuleNotFoundError):
 
 log = get_logger("intraday_scanner")
 
-INTRADAY_ALERT_HISTORY_FILE = REPORTS_DIR / "intraday_alert_history.json"
 INTRADAY_REPORT_FILE = REPORTS_DIR / f"intraday_alerts_{datetime.now(ZoneInfo(TZ_IST)).strftime('%Y%m%d')}.json"
 
 
@@ -127,7 +126,6 @@ def scan_portfolio(symbols: list[str] | None = None,
         alert_dedup_hours=2,
         is_intraday=True,
     )
-    alert_gen.load_alert_history(str(INTRADAY_ALERT_HISTORY_FILE))
 
     notifier = NotificationHub()
 
@@ -163,9 +161,6 @@ def scan_portfolio(symbols: list[str] | None = None,
         except Exception as exc:
             log.error(f"{symbol}: Exception during intraday scan: {exc}")
             errors.append((symbol, str(exc)))
-
-    # Save alert history
-    alert_gen.save_alert_history(str(INTRADAY_ALERT_HISTORY_FILE))
 
     duration = (datetime.now(ZoneInfo(TZ_IST)) - start_time).total_seconds()
 

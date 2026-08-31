@@ -63,7 +63,6 @@ except (ImportError, ModuleNotFoundError):
 
 log = get_logger(__name__)
 
-ALERT_HISTORY_FILE = REPORTS_DIR / "alert_history.json"
 REPORT_FILE = REPORTS_DIR / f"alerts_{datetime.now(ZoneInfo(TZ_IST)).strftime('%Y%m%d')}.json"
 
 
@@ -117,7 +116,6 @@ def scan_universe(symbols: list[str] | None = None,
         min_avg_volume=MIN_AVG_DAILY_VOLUME,
         alert_dedup_hours=ALERT_DEDUP_HOURS,
     )
-    alert_gen.load_alert_history(str(ALERT_HISTORY_FILE))
     
     # Initialize notifier
     notifier = NotificationHub()
@@ -153,9 +151,6 @@ def scan_universe(symbols: list[str] | None = None,
         except Exception as exc:
             log.error(f"{symbol}: Exception during scan: {exc}")
             errors.append((symbol, str(exc)))
-    
-    # Save alert history
-    alert_gen.save_alert_history(str(ALERT_HISTORY_FILE))
     
     # Generate report
     duration = (datetime.now(ZoneInfo(TZ_IST)) - start_time).total_seconds()

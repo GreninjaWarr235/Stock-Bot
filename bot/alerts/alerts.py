@@ -18,7 +18,6 @@ Alert filtering rules prevent noise:
 
 from __future__ import annotations
 
-import json
 import logging
 from datetime import datetime, timedelta
 from dataclasses import dataclass, asdict
@@ -320,14 +319,22 @@ class AlertGenerator:
         """
         if symbol not in self.alert_history:
             return True
-        
+
         history = self.alert_history[symbol]
         last_time = history.get(signal_type)
-        
+
         if last_time is None:
             return True
-        
-        hours_ago = (datetime.now(ZoneInfo(TZ_IST)) - last_time).total_seconds() / 3600
+
+        # Ensure historical timestamp is timezone-aware
+        if last_time.tzinfo is None:
+            last_time = last_time.replace(tzinfo=ZoneInfo(TZ_IST))
+        else:
+            last_time = last_time.astimezone(ZoneInfo(TZ_IST))
+
+        now = datetime.now(ZoneInfo(TZ_IST))
+
+        hours_ago = (now - last_time).total_seconds() / 3600
         return hours_ago >= self.alert_dedup_hours
     
     def _record_alert(self, symbol: str, signal_type: str) -> None:
@@ -335,30 +342,3 @@ class AlertGenerator:
         if symbol not in self.alert_history:
             self.alert_history[symbol] = {}
         self.alert_history[symbol][signal_type] = datetime.now(ZoneInfo(TZ_IST))
-    
-    def load_alert_history(self, filepath: str) -> None:
-        """Load alert history from JSON file."""
-        try:
-            with open(filepath, 'r') as f:
-                data = json.load(f)
-                # Reconstruct datetime objects
-                for symbol, signals in data.items():
-                    for signal_type, timestamp_str in signals.items():
-                        signals[signal_type] = datetime.fromisoformat(timestamp_str)
-                self.alert_history = data
-            log.info(f"Loaded alert history from {filepath}")
-        except FileNotFoundError:
-            log.debug(f"Alert history file not found: {filepath}")
-    
-    def save_alert_history(self, filepath: str) -> None:
-        """Save alert history to JSON file."""
-        # Convert datetime to ISO format strings
-        serializable = {}
-        for symbol, signals in self.alert_history.items():
-            serializable[symbol] = {
-                signal_type: ts.isoformat()
-                for signal_type, ts in signals.items()
-            }
-        
-        with open(filepath, 'w') as f:
-            json.dump(serializable, f, indent=2)
