@@ -11,7 +11,7 @@ import os
 from pathlib import Path
 
 # Load .env file
-env_file = Path(__file__).parent.parent / ".env"
+env_file = Path(__file__).parent.parent.parent / ".env"
 if env_file.exists():
     try:
         from dotenv import load_dotenv
