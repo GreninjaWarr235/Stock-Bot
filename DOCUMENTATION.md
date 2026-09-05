@@ -1,6 +1,6 @@
 # 📈 Stock Bot - Complete User Guide & Operational Manual
 
-The **Stock Bot** is an automated, end-to-end technical analysis scanner built specifically for National Stock Exchange (NSE) equity swing trading. It identifies high-probability breakout, reversal, and momentum patterns after market close, computes exact entry, stop-loss, and multi-target price levels, and dispatches formatted alerts directly to Telegram.
+The Stock Bot is an automated, end-to-end technical analysis scanner built specifically for National Stock Exchange (NSE) equity swing trading. It identifies high-probability breakout, reversal, and momentum patterns after market close, computes exact entry, stop-loss, and multi-target price levels, and dispatches formatted alerts directly to Telegram.
 
 ---
 
@@ -11,59 +11,62 @@ The **Stock Bot** is an automated, end-to-end technical analysis scanner built s
 3. [Telegram Notification Setup](#-telegram-notification-setup)
 4. [Manual Scanner Execution](#-manual-scanner-execution)
 5. [Market Hours Intraday Portfolio Detection System](#-market-hours-intraday-portfolio-detection-system-915-am---330-pm-ist)
-6. [Automated Market Close Scheduling](#-automated-market-close-scheduling)
-7. [Oracle Cloud Intraday Deployment](#️-oracle-cloud-intraday-deployment)
-8. [Analytics & Performance Engine](#-analytics--performance-engine)
-9. [Trading Signal & Pattern Logic](#-trading-signal--pattern-logic)
-10. [Troubleshooting & Maintenance](#-troubleshooting--maintenance)
+6. [Production Scheduling on Oracle Cloud](#️-production-scheduling-on-oracle-cloud)
+7. [Analytics & Performance Engine](#-analytics--performance-engine)
+8. [Trading Signal & Pattern Logic](#-trading-signal--pattern-logic)
+9. [Troubleshooting & Maintenance](#-troubleshooting--maintenance)
 
 ---
 
 ## 🏗️ Architecture & Directory Structure
 
+**Local development (Windows)**
+
 ```text
-d:\Stock Bot\
-├── DOCUMENTATION.md           # Master documentation (this file)
-├── .github/
-│   └── workflows/
-│       ├── daily-scanner.yml       # GitHub Actions daily scanner (4:05 PM IST)
-│       └── intraday-scanner.yml    # GitHub Actions intraday scanner
-├── pyrightconfig.json         # Pylance/Pyright search path configuration
-├── .vscode/
-│   └── settings.json          # VS Code IDE Python environment settings
-└── bot/                       # Core application root
-    ├── .env                   # Active environment configuration (git-ignored)
-    ├── .env.template          # Environment template file
-    ├── scheduler.py           # Daily close daemon background scheduler
-    ├── intraday_scheduler.py  # Market hours intraday daemon background scheduler
-    ├── tasks/                 # Windows Task Scheduler & batch script files
-    │   ├── run_scanner.bat            # Daily market close execution batch script
-    │   ├── run_intraday_scanner.bat   # Market hours intraday batch script
-    │   ├── setup_task.ps1             # Windows Task Scheduler script for daily scan (4:05 PM)
-    │   └── setup_intraday_task.ps1    # Windows Task Scheduler script for intraday scan (9:15 AM - 3:30 PM)
-    ├── alerts/                # Signal generation & notification module
-    │   ├── __init__.py
-    │   ├── alerts.py          # Alert data model & AlertGenerator scoring engine
-    │   ├── indicators.py      # EMA, RSI, MACD, ATR, Bollinger Bands algorithms
-    │   ├── intraday_scanner.py # Market hours intraday portfolio scanner
-    │   ├── notifier.py        # Telegram HTTP API dispatcher & rate-limiter
-    │   ├── patterns.py        # Pattern recognition routines (Breakouts, Reversals)
-    │   └── scanner.py         # Main daily scanner workflow entry point
-    ├── analytics/             # Reporting & metrics module
-    │   ├── __init__.py
-    │   ├── performance.py     # Win-rate & risk performance scorecard engine
-    │   ├── report_generator.py # Markdown digest builder
-    │   └── view_alerts.py     # CLI interactive alert browser & filter
-    ├── config/                # System configuration & logging
-    │   ├── __init__.py
-    │   ├── logger.py          # Structured file & CLI logger
-    │   └── settings.py        # Global environment settings & constants
-    ├── data/                  # Data loading & validation engine
-    │   ├── __init__.py
-    │   └── loader.py          # OHLCV data loader & NSE stock universe builder
-    ├── logs/                  # Daily runtime log files (`india_swing_YYYYMMDD.log`)
-    └── reports/               # JSON scan outputs & Markdown summaries
+D:\Stock Bot\
+├── DOCUMENTATION.md
+├── pyrightconfig.json
+└── bot/
+    ├── .env.template
+    ├── intraday_scheduler.py
+    ├── alerts/
+    │   ├── alerts.py
+    │   ├── indicators.py
+    │   ├── intraday_scanner.py
+    │   ├── notifier.py
+    │   ├── patterns.py
+    │   └── scanner.py
+    ├── analytics/
+    ├── config/
+    ├── data/
+    ├── reports/
+    └── logs/
 ```
+
+**Production (Oracle Cloud)**
+
+```text
+Oracle Cloud VM (Ubuntu 24.04)
+└── /home/ubuntu/Stock-Bot/
+    ├── .env                    # git-ignored production configuration
+    ├── venv/                   # Python virtual environment
+    └── bot/
+        ├── intraday_scheduler.py
+        ├── alerts/
+        │   ├── intraday_scanner.py
+        │   └── scanner.py
+        ├── config/
+        ├── data/
+        ├── reports/
+        └── logs/
+
+systemd
+├── stock-bot.service           # long-running intraday Python scheduler
+├── stock-bot-daily.timer       # 4:05 PM IST weekday scheduler
+└── stock-bot-daily.service     # one-shot daily scanner execution
+```
+
+The production source of truth for automated scanning is Oracle Cloud. GitHub is used for source-code version control and deployment, not as the production scheduler.
 
 ---
 
@@ -263,257 +266,24 @@ To view generated intraday alerts in CLI:
 python -m analytics.view_alerts --intraday
 ```
 
-### 5. GitHub Actions Deployment (Cloud, $0 Option)
-
-The bot can be run automatically without a Render server by using GitHub Actions scheduled workflows. This is the recommended cloud deployment option for the current scanner architecture because both scanners are short-lived jobs rather than continuously running processes.
-
-The workflows are stored in:
-
-```text
-.github/
-└── workflows/
-    ├── daily-scanner.yml
-    └── intraday-scanner.yml
-```
-
-**GitHub Actions requirements:**
-
-- The repository must be pushed to GitHub.
-- `.github/` must **not** be included in `.gitignore`.
-- `.env` must remain git-ignored and must never be committed.
-- Add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` as GitHub Actions repository secrets.
-- `yfinance` must be included in `requirements.txt`.
-- `DATA_SOURCE` should be set to `yfinance` for cloud execution.
-
-**GitHub Actions secrets:**
-
-Go to:
-
-`GitHub → Repository → Settings → Secrets and variables → Actions`
-
-Create:
-
-```text
-TELEGRAM_BOT_TOKEN
-TELEGRAM_CHAT_ID
-```
-
-The workflow injects these values as environment variables; the actual credentials are not stored in the repository.
-
-**Daily scanner schedule:**
-
-The daily scanner runs at **4:05 PM IST, Monday-Friday**, using:
-
-```yaml
-schedule:
-  - cron: "35 10 * * 1-5"
-```
-
-GitHub Actions cron schedules use UTC, so `10:35 UTC = 4:05 PM IST`.
-
-**Intraday scanner schedule:**
-
-The intraday workflow uses two cron entries:
-
-```yaml
-schedule:
-  # 9:15 AM IST
-  - cron: "45 3 * * 1-5"
-
-  # 9:30 AM IST through 3:15 PM IST
-  - cron: "0,15,30,45 4-9 * * 1-5"
-```
-
-These produce scans at approximately:
-
-```text
-09:15 IST
-09:30 IST
-09:45 IST
-10:00 IST
-...
-15:00 IST
-15:15 IST
-```
-
-A separate **3:30 PM IST** scan is intentionally not scheduled. The Python market-hours check still considers 3:30 PM IST within market hours.
-
-GitHub Actions scheduled workflows are not guaranteed to start at the exact cron minute, so this should be treated as a periodic alerting mechanism rather than a precision trading scheduler.
-
-**Manual workflow testing:**
-
-Both workflows include `workflow_dispatch`, allowing a manual run from:
-
-`GitHub → Actions → <workflow name> → Run workflow`
-
-For testing the intraday scanner outside market hours, run locally with:
-
-```powershell
-python -m alerts.intraday_scanner --force
-```
-
-The `--force` flag bypasses the market-hours guard only; it does not change the data source or execution behavior.
-
-**Data source configuration:**
-
-The data loader supports:
-
-- `synthetic` — deterministic synthetic GBM data for offline testing.
-- `csv` — local CSV data.
-- `yfinance` — Yahoo Finance data for NSE symbols using the `.NS` suffix.
-
-For daily scans, `yfinance` requests daily candles. For intraday scans, the scanner requests `15m` candles using a recent Yahoo Finance window.
-
-The intraday scanner must pass:
-
-```python
-interval="15m"
-```
-
-to `load_data()`. The daily scanner can use the default daily interval.
-
-The scanner reads the data source from `config.settings.DATA_SOURCE`; it should not hard-code `source="synthetic"`.
-
-**Environment configuration:**
-
-The local `.env` can remain configured for development/testing:
-
-```env
-TELEGRAM_BOT_TOKEN=...
-TELEGRAM_CHAT_ID=...
-
-ALERT_MIN_SCORE=70
-MIN_PRICE=50.0
-MIN_AVG_DAILY_VOLUME=200000
-ALERT_DEDUP_HOURS=4
-
-DATA_SOURCE=synthetic
-```
-
-For GitHub Actions, the deployment environment uses:
-
-```text
-DATA_SOURCE=yfinance
-```
-
-while the alert thresholds retain their defaults unless explicitly overridden.
-
-`EXECUTION_MODE` is not part of the current configuration because it is not used by the scanner/data-loader code.
-
-**Timezone handling:**
-
-GitHub Actions runners use UTC. Application logic therefore explicitly uses `Asia/Kolkata` for Indian market-hour checks and log timestamps.
-
-The logger in `config/logger.py` formats timestamps in IST, including the date used for daily log filenames.
-
 ---
 
-## ⏰ Automated Market Close Scheduling
+## ☁️ Production Scheduling on Oracle Cloud
 
-Indian stock markets close at 3:30 PM IST. The scanner is designed to run automatically at **4:05 PM IST** every weekday after daily price candle close.
+The production bot runs on an Oracle Cloud Always Free VM. The two scanners intentionally use different scheduling mechanisms because their execution patterns are different.
 
-### Option A: Windows Task Scheduler (Recommended)
+### Intraday scanner: long-running Python scheduler
 
-A PowerShell script `bot/tasks/setup_task.ps1` automatically registers a background task named `SwingBotScanner`.
+`bot/intraday_scheduler.py` is a persistent process managed by `stock-bot.service`. It stays alive and handles market-session logic itself:
 
-**Features of Scheduled Task:**
+- Monday-Friday only.
+- NSE market hours: 09:15-15:30 IST.
+- Runs `alerts.intraday_scanner` every 15 minutes.
+- Uses `Asia/Kolkata` explicitly for market-hour calculations.
+- Waits outside market hours and over weekends.
+- Restarts automatically if the process fails.
 
-- Runs automatically **Monday through Friday at 4:05 PM IST**.
-- **Wakes Windows from sleep** to execute the scan.
-- Runs whether logged in or locked.
-- Operates on AC power or laptop battery.
-
-**Setup Instructions:**
-
-1. Open PowerShell as Administrator (or standard user context).
-2. Execute the registration script:
-
-   ```powershell
-   cd "d:\Stock Bot\bot"
-   powershell -ExecutionPolicy Bypass -File .\tasks\setup_task.ps1
-   ```
-
-3. Verify in Windows Task Scheduler (`taskschd.msc`):
-   - Look for **SwingBotScanner** under Task Scheduler Library.
-
-### Option B: Built-in Python Background Daemon
-
-If you prefer to leave a continuous background terminal process running:
-
-```powershell
-python scheduler.py --time 16:05
-```
-
-This daemon sleeps until 16:05 IST each market weekday, triggers `scan_universe()`, and repeats automatically.
-
-### Option C: GitHub Actions (Cloud)
-
-For a cloud-based, no-server deployment, use `.github/workflows/daily-scanner.yml`.
-
-The workflow runs:
-
-```text
-Monday-Friday at 4:05 PM IST
-```
-
-using:
-
-```yaml
-cron: "35 10 * * 1-5"
-```
-
-GitHub Actions is used instead of Render Cron Jobs for the current deployment because Render Cron Jobs require a paid service, while GitHub Actions provides a suitable scheduled runner for this short-lived scanner.
-
----
-
-## ☁️ Oracle Cloud Intraday Deployment
-
-The production intraday scanner runs on an **Oracle Cloud Always Free VM** rather than GitHub Actions. This provides a persistent process that executes the scanner every 15 minutes during NSE market hours without depending on GitHub Actions' scheduled-workflow start time.
-
-### 1. Oracle VM Configuration
-
-```text
-Provider       : Oracle Cloud Infrastructure
-OS             : Ubuntu 24.04
-Shape          : VM.Standard.A1.Flex
-CPU            : 1 OCPU
-RAM            : 6 GB
-Public IPv4    : Enabled
-Repository     : /home/ubuntu/Stock-Bot
-Python         : /home/ubuntu/Stock-Bot/venv
-```
-
-The VM is configured within Oracle's Always Free allocation. Keep OCI resources within the applicable Always Free limits to avoid charges.
-
-### 2. Production Environment
-
-The production `.env` file is stored on the Oracle VM at `/home/ubuntu/Stock-Bot/.env`. It contains Telegram credentials and production configuration and must never be committed to Git.
-
-Example:
-
-```env
-TELEGRAM_BOT_TOKEN=...
-TELEGRAM_CHAT_ID=...
-ALERT_MIN_SCORE=70
-MIN_PRICE=50.0
-MIN_AVG_DAILY_VOLUME=200000
-ALERT_DEDUP_HOURS=4
-DATA_SOURCE=yfinance
-```
-
-### 3. Production Intraday Scheduler
-
-The production scheduler is `bot/intraday_scheduler.py`. It uses `Asia/Kolkata` / IST explicitly, runs Monday-Friday, treats 09:15-15:30 IST as NSE market hours, executes the intraday scanner every 15 minutes, launches each scanner run as a separate Python subprocess, and waits outside market hours and over weekends.
-
-Syntax check:
-
-```bash
-python -m py_compile bot/intraday_scheduler.py
-```
-
-### 4. systemd Service
-
-The scheduler runs as `/etc/systemd/system/stock-bot.service`:
+The systemd service is:
 
 ```ini
 [Unit]
@@ -535,81 +305,140 @@ RestartSec=30
 WantedBy=multi-user.target
 ```
 
-Enable/start with:
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable stock-bot
-sudo systemctl start stock-bot
-```
-
-Check status/logs:
+Useful commands:
 
 ```bash
 sudo systemctl status stock-bot --no-pager
 sudo journalctl -u stock-bot -f
-```
-
-The service continues after SSH disconnects and starts automatically after VM reboot.
-
-### 5. Production Scan Schedule
-
-The scheduler targets:
-
-```text
-09:15 IST
-09:30 IST
-09:45 IST
-10:00 IST
-...
-15:00 IST
-15:15 IST
-15:30 IST
-```
-
-The final 15:30 scan is optional; if it is not desired, the scheduler can be configured to stop at 15:15.
-
-### 6. GitHub Actions vs Oracle Cloud
-
-GitHub Actions remains useful for the **daily market-close scanner**, but the production intraday scanner should use Oracle Cloud. GitHub Actions scheduled workflows can be delayed during periods of platform load, so they are not suitable when dependable 15-minute intraday polling is required.
-
-Current architecture:
-
-```text
-Daily scanner
-    └── GitHub Actions
-        └── 4:05 PM IST weekday scheduled job
-
-Intraday scanner
-    └── Oracle Cloud VM
-        └── systemd
-            └── intraday_scheduler.py
-                └── scanner subprocess every 15 minutes
-```
-
-### 7. Updating the Oracle Deployment
-
-After pushing code changes to GitHub:
-
-```bash
-cd /home/ubuntu/Stock-Bot
-git pull
-source venv/bin/activate
-pip install -r requirements.txt
 sudo systemctl restart stock-bot
 ```
 
-Never commit `.env` or other credentials.
+### Daily scanner: systemd timer + one-shot service
 
-Useful maintenance commands:
+The daily scanner only needs to execute once per weekday at 4:05 PM IST, so it does not need a continuously running Python scheduler. A systemd timer handles the schedule and starts a short-lived `Type=oneshot` service.
+
+```text
+stock-bot-daily.timer
+        │
+        │ Mon-Fri 16:05 IST
+        ▼
+stock-bot-daily.service
+        │
+        ▼
+python -m alerts.scanner
+        │
+        ▼
+      exits
+```
+
+Timer configuration:
+
+```ini
+[Unit]
+Description=Run Stock Bot Daily Scanner at 4:05 PM IST
+
+[Timer]
+OnCalendar=Mon..Fri 16:05:00 Asia/Kolkata
+Persistent=true
+Unit=stock-bot-daily.service
+
+[Install]
+WantedBy=timers.target
+```
+
+Daily service configuration:
+
+```ini
+[Unit]
+Description=Stock Bot Daily Scanner
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory=/home/ubuntu/Stock-Bot
+Environment="PYTHONPATH=/home/ubuntu/Stock-Bot/bot"
+Environment="PYTHONUNBUFFERED=1"
+ExecStart=/home/ubuntu/Stock-Bot/venv/bin/python -m alerts.scanner
+```
+
+Useful commands:
 
 ```bash
-sudo systemctl status stock-bot --no-pager
-sudo systemctl restart stock-bot
-sudo systemctl stop stock-bot
-sudo journalctl -u stock-bot -n 100 --no-pager
-sudo journalctl -u stock-bot -f
+systemctl list-timers --all | grep stock-bot
+sudo systemctl status stock-bot-daily.timer --no-pager
+sudo systemctl start stock-bot-daily.service
+sudo journalctl -u stock-bot-daily.service -n 100 --no-pager
 ```
+
+Validate the timer calendar with:
+
+```bash
+systemd-analyze calendar 'Mon..Fri 16:05:00 Asia/Kolkata'
+```
+
+The application logger also formats timestamps in IST. systemd/journald may display its own service timestamps in UTC depending on the VM's system timezone; this does not change the timer's configured IST schedule.
+
+### Oracle VM configuration
+
+```text
+Provider       : Oracle Cloud Infrastructure
+OS             : Ubuntu 24.04
+Shape          : VM.Standard.A1.Flex
+CPU            : 1 OCPU
+RAM            : 6 GB
+Public IPv4    : Enabled
+Repository     : /home/ubuntu/Stock-Bot
+Python         : /home/ubuntu/Stock-Bot/venv
+Data source    : yfinance
+```
+
+The VM is intended to remain within Oracle's Always Free allocation. Keep OCI resource usage within the applicable limits.
+
+### Production environment
+
+The production `.env` is stored at the repository root:
+
+```text
+/home/ubuntu/Stock-Bot/.env
+```
+
+It is git-ignored and must never be committed. Example configuration:
+
+```env
+TELEGRAM_BOT_TOKEN=...
+TELEGRAM_CHAT_ID=...
+ALERT_MIN_SCORE=70
+MIN_PRICE=50.0
+MIN_AVG_DAILY_VOLUME=200000
+ALERT_DEDUP_HOURS=4
+DATA_SOURCE=yfinance
+```
+
+The code explicitly resolves this root-level `.env` file.
+
+### Production verification
+
+Intraday scheduler syntax check:
+
+```bash
+python -m py_compile bot/intraday_scheduler.py
+```
+
+Manual intraday test:
+
+```bash
+python -m alerts.intraday_scanner --force
+```
+
+Manual daily test:
+
+```bash
+python -m alerts.scanner
+```
+
+A daily test on a weekend will correctly report that the market is closed and scan zero symbols.
 
 ---
 
@@ -718,17 +547,14 @@ The alert engine validates signals against strict price action & indicator crite
 | Symptom | Cause | Solution |
 | :--- | :--- | :--- |
 | `Cannot find module alerts.alerts` | Python search path mismatch in IDE | Open root folder `d:\Stock Bot` in VS Code. `pyrightconfig.json` and `.vscode/settings.json` resolve paths automatically. |
-| `Telegram credentials not configured` | Missing or blank `.env` values | Ensure `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are set in `bot/.env`. |
+| `Telegram credentials not configured` | Missing or blank `.env` values | Ensure `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are set in `/home/ubuntu/Stock-Bot/.env` on Oracle, or in the appropriate local root `.env`. |
 | `Weekend detected. Skipping scan.` | Scanner run on Saturday/Sunday | Market is closed. Pass `--force` or specify `--symbols` if testing on weekends. |
-| Scheduled Task didn't run | Windows sleep mode or permission issue | Verify `SwingBotScanner` or `SwingBotIntradayScanner` in Task Scheduler (`taskschd.msc`). Run `bot/setup_task.ps1` or `bot/setup_intraday_task.ps1` to re-register tasks. |
 | View logs | Check daily logs | Open log files in `bot/logs/stock_bot_YYYYMMDD.log`. Log timestamps are formatted in IST. |
-| GitHub Actions job skipped outside market hours | Intraday scanner checks Asia/Kolkata market hours | This is expected on weekends/outside 09:15-15:30 IST. Use `--force` for a manual local test. |
 | yfinance returns no data | Incorrect data source or ticker format | Use `DATA_SOURCE=yfinance`, ensure `yfinance` is in `requirements.txt`, and keep CSV symbols as plain NSE symbols such as `RELIANCE`, not `RELIANCE.NS`. |
-| GitHub Actions authentication failure | Telegram secrets missing | Add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` under repository Actions secrets. Never commit `.env`. |
-| GitHub Actions workflow not visible | Workflow file not committed | Ensure `.github/workflows/*.yml` is tracked by Git and pushed to the default branch. Do not add `.github/` to `.gitignore`. |
 | Oracle service not running | systemd service stopped or failed | Run `sudo systemctl status stock-bot --no-pager`, then inspect `sudo journalctl -u stock-bot -n 100 --no-pager`. |
-| Oracle scanner not running at market open | Scheduler/service issue | Confirm `stock-bot` is enabled and running. The scheduler uses IST explicitly. |
+| Oracle intraday scanner not running at market open | systemd service or scheduler issue | Run `sudo systemctl status stock-bot --no-pager` and `sudo journalctl -u stock-bot -n 100 --no-pager`. The scheduler uses IST explicitly. |
 | Oracle `.env` not loaded | Incorrect `.env` path | Production `.env` must be `/home/ubuntu/Stock-Bot/.env`; verify `config/settings.py` resolves the repository root correctly. |
+| Oracle daily timer not firing | Timer disabled or calendar configuration issue | Run `systemctl list-timers --all \| grep stock-bot`, `sudo systemctl status stock-bot-daily.timer --no-pager`, and `systemd-analyze calendar 'Mon..Fri 16:05:00 Asia/Kolkata'`. |
 
 ---
 
