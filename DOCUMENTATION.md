@@ -149,121 +149,88 @@ Check Telegram; you should receive a message: `✅ Telegram Notifier Test`.
 
 ## 🐧 Oracle Ubuntu Quick Startup & Essential Linux Commands
 
-When working on the production Oracle VM from Windows:
-
-**Connect from PowerShell using your SSH private key:**
+**Connect from Windows PowerShell using your Oracle SSH key:**
 
 ```bash
 ssh -i "C:\path\to\private-key.key" ubuntu@YOUR_ORACLE_PUBLIC_IP
 ```
 
-If your SSH key is already configured:
-
-```bash
-ssh ubuntu@YOUR_ORACLE_PUBLIC_IP
-```
-
-**Enter the Stock-Bot directory and activate the virtual environment:**
+Then:
 
 ```bash
 cd ~/Stock-Bot
 source venv/bin/activate
 ```
 
-The prompt should show `(venv)` when the Python environment is active.
-
-**Essential navigation and file commands:**
+**Git deployment**
 
 ```bash
-pwd                           # Show current directory
-ls -lah                       # List files, including hidden files
-cd ~/Stock-Bot                # Go to Stock-Bot
-cd ..                         # Go up one directory
-cd ~                          # Go to home directory
-cat filename                  # Print a file
-nano filename                 # Edit a file
-cp source destination         # Copy a file
-mv source destination         # Move/rename a file
-rm filename                   # Delete a file
-mkdir -p path/to/folder       # Create directories
-```
-
-**Useful Stock-Bot commands:**
-
-```bash
-git status
+cd ~/Stock-Bot
 git pull
-
-python -m alerts.scanner
-python -m alerts.scanner --symbols RELIANCE TCS INFY
-python -m alerts.scanner --test
-python -m alerts.intraday_scanner --force
+git status
 ```
 
-**Check the production services:**
+**Check production services**
 
 ```bash
 sudo systemctl status stock-bot.service --no-pager
 sudo systemctl status stock-bot-daily.timer --no-pager
-systemctl list-timers --all | grep stock-bot
+sudo systemctl list-timers --all | grep stock-bot
 ```
 
-**Restart the intraday service:**
-
-```bash
-sudo systemctl restart stock-bot.service
-```
-
-**View service logs:**
+**View logs**
 
 ```bash
 sudo journalctl -u stock-bot.service -n 100 --no-pager
+sudo journalctl -u stock-bot.service -f
 sudo journalctl -u stock-bot-daily.service -n 100 --no-pager
 ```
 
-**Follow live intraday logs:**
+**Restart intraday scheduler**
 
 ```bash
-sudo journalctl -u stock-bot.service -f
+sudo systemctl restart stock-bot.service
+sudo systemctl status stock-bot.service --no-pager
 ```
 
-Press `Ctrl+C` to stop following logs.
+**Manually run daily scanner**
 
-**After changing a systemd service or timer:**
+```bash
+sudo systemctl start stock-bot-daily.service
+sudo systemctl status stock-bot-daily.service --no-pager
+```
+
+A `Type=oneshot` daily service normally becomes inactive (dead) after a successful run. Look for `status=0/SUCCESS`.
+
+**After changing systemd unit files**
 
 ```bash
 sudo systemctl daemon-reload
+sudo systemctl restart stock-bot.service
 ```
 
-Then restart/enable the relevant service or timer.
-
-**Check server resources:**
+For timer changes:
 
 ```bash
-df -h          # Disk usage
-free -h        # RAM usage
-uptime         # System uptime
+sudo systemctl daemon-reload
+sudo systemctl restart stock-bot-daily.timer
 ```
 
-**Disconnect from Ubuntu:**
+**Basic server checks**
+
+```bash
+df -h
+free -h
+uptime
+```
+
+**Disconnect**
 
 ```bash
 exit
 ```
 
-This returns you to your Windows terminal.
-
-**Typical startup sequence:**
-
-```bash
-ssh -i "C:\path\to\private-key.key" ubuntu@YOUR_ORACLE_PUBLIC_IP
-
-cd ~/Stock-Bot
-source venv/bin/activate
-git status
-```
-
-> **Production note:** Oracle Cloud Ubuntu is the production environment. GitHub is used for source-code version control; production scheduling is handled by systemd on Oracle Cloud.
+> **Recommended production workflow:** edit in Windows VS Code → `git commit` → `git push` → SSH into Oracle → `git pull`. Keep the production `.env` on Oracle and never commit it.
 
 ---
 
@@ -271,9 +238,9 @@ git status
 
 You can run scans manually at any time using the virtual environment python command.
 
-### 1. Default Watchlist Scan (Top Symbols)
+### 1. Default Nifty 200 Scan
 
-Scans top Nifty equity candidates:
+Scans the full Nifty 200 universe from `bot/data/universe/nifty200.csv`:
 
 ```powershell
 python -m alerts.scanner
@@ -287,7 +254,7 @@ Pass targeted stock tickers using `--symbols`:
 python -m alerts.scanner --symbols RELIANCE TCS INFOSYS TATAMOTORS
 ```
 
-### 3. Full Market Universe Scan
+### 3. Full-Universe Flag (Legacy/Redundant)
 
 Scans the entire stock universe dataset (~5-10 minutes):
 
@@ -303,14 +270,26 @@ The **Intraday Portfolio Detection System** continuously monitors your personal 
 
 ### 1. Target Portfolio File (`data/universe/portfolio.csv`)
 
-Edit `bot/data/universe/portfolio.csv` to customize your target portfolio stocks:
+The intraday scanner monitors the stocks listed in `bot/data/universe/portfolio.csv`. The current production portfolio contains 9 symbols:
 
 ```csv
 symbol,name,sector,index
-RELIANCE,Reliance Industries Ltd,Energy,PORTFOLIO
-TCS,Tata Consultancy Services Ltd,IT,PORTFOLIO
-HDFCBANK,HDFC Bank Ltd,Banking,PORTFOLIO
-INFY,Infosys Ltd,IT,PORTFOLIO
+CYIENTDLM,Cyient DLM,Electronics,PORTFOLIO
+DHOOTTRANS,Dhoot Transmission,Auto Components,PORTFOLIO
+INDOMIM,Indo-MIM,Engineering,PORTFOLIO
+ATHERENERG,Ather Energy,Automobile,PORTFOLIO
+MARINE,Marine Electricals,Electrical Equipment,PORTFOLIO
+SETL,Standard Engineering Technology,Engineering,PORTFOLIO
+STLTECH,Sterlite Technologies,Telecom,PORTFOLIO
+ETERNAL,Eternal (formerly Zomato),Consumer Services,PORTFOLIO
+SYRMA,Syrma SGS Technology,Electronics,PORTFOLIO
+```
+
+To change the portfolio, edit the CSV in Windows, commit and push the change to GitHub, then pull the change on Oracle:
+
+```bash
+cd ~/Stock-Bot
+git pull
 ```
 
 ### 2. Manual & Test Execution
@@ -333,51 +312,17 @@ INFY,Infosys Ltd,IT,PORTFOLIO
   .\tasks\run_intraday_scanner.bat
   ```
 
-### 3. Intraday Automation & Scheduling Options
+### 3. Intraday Automation & Scheduling
 
-**Option A: Windows Task Scheduler (Recommended - `SwingBotIntradayScanner`)**
+Production scheduling is handled on Oracle Cloud by systemd. Do not configure Windows Task Scheduler for the production bot.
 
-Registers a Windows Scheduled Task `SwingBotIntradayScanner` that executes `run_intraday_scanner.bat` **every 15 minutes** between **09:15 AM and 03:30 PM IST**, Monday through Friday:
+For local development/testing, the scheduler can still be run directly:
 
-```powershell
-cd "d:\Stock Bot\bot"
-powershell -ExecutionPolicy Bypass -File .\tasks\setup_intraday_task.ps1
-```
-
-**Task Properties:**
-
-- **Task Name**: `SwingBotIntradayScanner`
-- **Schedule**: Mon-Fri, 9:15 AM to 3:30 PM IST (Repeats every 15 mins)
-- **Wake from Sleep**: Enabled
-- **Run on Battery**: Enabled
-
-**Useful Task Management Commands:**
-
-- *Check task status:*
-
-  ```powershell
-  Get-ScheduledTask -TaskName "SwingBotIntradayScanner"
-  ```
-
-- *Trigger task manually:*
-
-  ```powershell
-  Start-ScheduledTask -TaskName "SwingBotIntradayScanner"
-  ```
-
-- *Remove task:*
-
-  ```powershell
-  Unregister-ScheduledTask -TaskName "SwingBotIntradayScanner" -Confirm:$false
-  ```
-
-**Option B: Continuous Intraday Daemon**
-
-Runs a background daemon polling every 15 minutes during active market sessions:
-
-```powershell
+```bash
 python intraday_scheduler.py --interval 15
 ```
+
+Production runs Monday-Friday, 09:15-15:30 IST, every 15 minutes, through `stock-bot.service`, independently of your Windows PC.
 
 ### 4. Viewing Intraday Alerts
 
@@ -429,9 +374,9 @@ WantedBy=multi-user.target
 Useful commands:
 
 ```bash
-sudo systemctl status stock-bot --no-pager
-sudo journalctl -u stock-bot -f
-sudo systemctl restart stock-bot
+sudo systemctl status stock-bot.service --no-pager
+sudo journalctl -u stock-bot.service -f
+sudo systemctl restart stock-bot.service
 ```
 
 ### Daily scanner: systemd timer + one-shot service
@@ -561,6 +506,19 @@ python -m alerts.scanner
 
 A daily test on a weekend will correctly report that the market is closed and scan zero symbols.
 
+### Current production architecture
+
+As of September 2026, production uses:
+
+- Oracle Cloud Ubuntu 24.04.
+- `stock-bot.service`: long-running intraday scheduler for the 9-stock portfolio.
+- `stock-bot-daily.timer`: weekdays at 16:05 IST.
+- `stock-bot-daily.service`: one-shot Nifty 200 daily scanner.
+- `DATA_SOURCE=yfinance`.
+- Telegram notifications configured on Oracle.
+
+GitHub is the source-code deployment path; systemd is the production scheduler.
+
 ---
 
 ## 📊 Analytics & Performance Engine
@@ -672,8 +630,8 @@ The alert engine validates signals against strict price action & indicator crite
 | `Weekend detected. Skipping scan.` | Scanner run on Saturday/Sunday | Market is closed. Pass `--force` or specify `--symbols` if testing on weekends. |
 | View logs | Check daily logs | Open log files in `bot/logs/stock_bot_YYYYMMDD.log`. Log timestamps are formatted in IST. |
 | yfinance returns no data | Incorrect data source or ticker format | Use `DATA_SOURCE=yfinance`, ensure `yfinance` is in `requirements.txt`, and keep CSV symbols as plain NSE symbols such as `RELIANCE`, not `RELIANCE.NS`. |
-| Oracle service not running | systemd service stopped or failed | Run `sudo systemctl status stock-bot --no-pager`, then inspect `sudo journalctl -u stock-bot -n 100 --no-pager`. |
-| Oracle intraday scanner not running at market open | systemd service or scheduler issue | Run `sudo systemctl status stock-bot --no-pager` and `sudo journalctl -u stock-bot -n 100 --no-pager`. The scheduler uses IST explicitly. |
+| Oracle service not running | systemd service stopped or failed | Run `sudo systemctl status stock-bot.service --no-pager`, then inspect `sudo journalctl -u stock-bot.service -n 100 --no-pager`. |
+| Oracle intraday scanner not running at market open | systemd service or scheduler issue | Run `sudo systemctl status stock-bot.service --no-pager` and `sudo journalctl -u stock-bot.service -n 100 --no-pager`. The scheduler uses IST explicitly. |
 | Oracle `.env` not loaded | Incorrect `.env` path | Production `.env` must be `/home/ubuntu/Stock-Bot/.env`; verify `config/settings.py` resolves the repository root correctly. |
 | Oracle daily timer not firing | Timer disabled or calendar configuration issue | Run `systemctl list-timers --all \| grep stock-bot`, `sudo systemctl status stock-bot-daily.timer --no-pager`, and `systemd-analyze calendar 'Mon..Fri 16:05:00 Asia/Kolkata'`. |
 
