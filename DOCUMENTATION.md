@@ -9,12 +9,13 @@ The Stock Bot is an automated, end-to-end technical analysis scanner built speci
 1. [Architecture & Directory Structure](#-architecture--directory-structure)
 2. [Quick Start & Setup](#-quick-start--setup)
 3. [Telegram Notification Setup](#-telegram-notification-setup)
-4. [Manual Scanner Execution](#-manual-scanner-execution)
-5. [Market Hours Intraday Portfolio Detection System](#-market-hours-intraday-portfolio-detection-system-915-am---330-pm-ist)
-6. [Production Scheduling on Oracle Cloud](#️-production-scheduling-on-oracle-cloud)
-7. [Analytics & Performance Engine](#-analytics--performance-engine)
-8. [Trading Signal & Pattern Logic](#-trading-signal--pattern-logic)
-9. [Troubleshooting & Maintenance](#-troubleshooting--maintenance)
+4. [Oracle Ubuntu Quick Startup & Essential Linux Commands](#-oracle-ubuntu-quick-startup--essential-linux-commands)
+5. [Manual Scanner Execution](#-manual-scanner-execution)
+6. [Market Hours Intraday Portfolio Detection System](#-market-hours-intraday-portfolio-detection-system-915-am---330-pm-ist)
+7. [Production Scheduling on Oracle Cloud](#️-production-scheduling-on-oracle-cloud)
+8. [Analytics & Performance Engine](#-analytics--performance-engine)
+9. [Trading Signal & Pattern Logic](#-trading-signal--pattern-logic)
+10. [Troubleshooting & Maintenance](#-troubleshooting--maintenance)
 
 ---
 
@@ -143,6 +144,126 @@ python -m alerts.scanner --test
 ```
 
 Check Telegram; you should receive a message: `✅ Telegram Notifier Test`.
+
+---
+
+## 🐧 Oracle Ubuntu Quick Startup & Essential Linux Commands
+
+When working on the production Oracle VM from Windows:
+
+**Connect from PowerShell using your SSH private key:**
+
+```bash
+ssh -i "C:\path\to\private-key.key" ubuntu@YOUR_ORACLE_PUBLIC_IP
+```
+
+If your SSH key is already configured:
+
+```bash
+ssh ubuntu@YOUR_ORACLE_PUBLIC_IP
+```
+
+**Enter the Stock-Bot directory and activate the virtual environment:**
+
+```bash
+cd ~/Stock-Bot
+source venv/bin/activate
+```
+
+The prompt should show `(venv)` when the Python environment is active.
+
+**Essential navigation and file commands:**
+
+```bash
+pwd                           # Show current directory
+ls -lah                       # List files, including hidden files
+cd ~/Stock-Bot                # Go to Stock-Bot
+cd ..                         # Go up one directory
+cd ~                          # Go to home directory
+cat filename                  # Print a file
+nano filename                 # Edit a file
+cp source destination         # Copy a file
+mv source destination         # Move/rename a file
+rm filename                   # Delete a file
+mkdir -p path/to/folder       # Create directories
+```
+
+**Useful Stock-Bot commands:**
+
+```bash
+git status
+git pull
+
+python -m alerts.scanner
+python -m alerts.scanner --symbols RELIANCE TCS INFY
+python -m alerts.scanner --test
+python -m alerts.intraday_scanner --force
+```
+
+**Check the production services:**
+
+```bash
+sudo systemctl status stock-bot.service --no-pager
+sudo systemctl status stock-bot-daily.timer --no-pager
+systemctl list-timers --all | grep stock-bot
+```
+
+**Restart the intraday service:**
+
+```bash
+sudo systemctl restart stock-bot.service
+```
+
+**View service logs:**
+
+```bash
+sudo journalctl -u stock-bot.service -n 100 --no-pager
+sudo journalctl -u stock-bot-daily.service -n 100 --no-pager
+```
+
+**Follow live intraday logs:**
+
+```bash
+sudo journalctl -u stock-bot.service -f
+```
+
+Press `Ctrl+C` to stop following logs.
+
+**After changing a systemd service or timer:**
+
+```bash
+sudo systemctl daemon-reload
+```
+
+Then restart/enable the relevant service or timer.
+
+**Check server resources:**
+
+```bash
+df -h          # Disk usage
+free -h        # RAM usage
+uptime         # System uptime
+```
+
+**Disconnect from Ubuntu:**
+
+```bash
+exit
+```
+
+This returns you to your Windows terminal.
+
+**Typical startup sequence:**
+
+```bash
+ssh -i "C:\path\to\private-key.key" ubuntu@YOUR_ORACLE_PUBLIC_IP
+
+cd ~/Stock-Bot
+source venv/bin/activate
+git status
+```
+
+> **Production note:** Oracle Cloud Ubuntu is the production environment. GitHub is used for source-code version control; production scheduling is handled by systemd on Oracle Cloud.
 
 ---
 

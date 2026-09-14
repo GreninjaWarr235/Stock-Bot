@@ -90,7 +90,7 @@ def scan_universe(symbols: list[str] | None = None,
     if symbols is None:
         # Load universe
         universe_df = load_universe()
-        symbols = universe_df["symbol"].tolist()[:20]  # Start with top 20
+        symbols = universe_df["symbol"].tolist()
         log.info(f"Scanning {len(symbols)} symbols from universe")
     else:
         log.info(f"Scanning {len(symbols)} specified symbols")

@@ -92,12 +92,25 @@ def load_data(symbols, start, end, source="synthetic", kite=None, interval="day"
 
 
 def load_universe(filepath=None):
-    """Load symbol universe from CSV."""
+    """Load the Nifty 200 symbol universe from CSV."""
     if filepath is None:
-        filepath = Path(__file__).parent / "universe" / "nse_tracker.csv"
-    
+        filepath = Path(__file__).parent / "universe" / "nifty200.csv"
+
     df = pd.read_csv(filepath)
     df.columns = [c.strip() for c in df.columns]
+
+    if "symbol" not in df.columns:
+        raise ValueError(
+            f"Nifty 200 universe must contain a 'symbol' column. "
+            f"Found: {df.columns.tolist()}"
+        )
+
+    df["symbol"] = df["symbol"].astype(str).str.strip()
+    df = df[df["symbol"].ne("") & df["symbol"].ne("nan")]
+    df = df.drop_duplicates().reset_index(drop=True)
+
+    log.info(f"Loaded Nifty 200 universe: {len(df)} symbols")
+
     return df
 
 

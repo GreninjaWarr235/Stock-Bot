@@ -1,11 +1,10 @@
 symbol,name,sector,index
-RELIANCE,Reliance Industries Ltd,Energy,PORTFOLIO
-TCS,Tata Consultancy Services Ltd,IT,PORTFOLIO
-HDFCBANK,HDFC Bank Ltd,Banking,PORTFOLIO
-INFY,Infosys Ltd,IT,PORTFOLIO
-ICICIBANK,ICICI Bank Ltd,Banking,PORTFOLIO
-SBIN,State Bank of India,Banking,PORTFOLIO
-BHARTIARTL,Bharti Airtel Ltd,Telecom,PORTFOLIO
-ITC,ITC Ltd,FMCG,PORTFOLIO
-LT,Larsen & Toubro Ltd,Construction,PORTFOLIO
-AXISBANK,Axis Bank Ltd,Banking,PORTFOLIO
+CYIENTDLM,Cyient DLM Ltd,Electronics,PORTFOLIO
+DHOOTTRANS,Dhoot Transmission Ltd,Automotive,PORTFOLIO
+INDOMIM,INDO-MIM Ltd,Engineering,PORTFOLIO
+ATHERENERG,Ather Energy Ltd,Automotive,PORTFOLIO
+MARINE,Marine Electricals (India) Ltd,Electrical Equipment,PORTFOLIO
+SETL,Standard Engineering Technology Ltd,Engineering,PORTFOLIO
+STLTECH,Sterlite Technologies Ltd,Telecom,PORTFOLIO
+ETERNAL,Eternal Ltd,Consumer Internet,PORTFOLIO
+SYRMA,Syrma SGS Technology Ltd,Electronics,PORTFOLIO
